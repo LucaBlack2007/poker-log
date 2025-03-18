@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Poker Money Tracker</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Replace with your Client ID -->
-  <meta name="google-signin-client_id" content="712369537103-fsd121m5dnd9j1fbkabmanq2msoet2gt.apps.googleusercontent.com">
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
 </head>
 <body>
   <header>
     <h1>Poker Money Tracker</h1>
     <div id="loginSection">
       <span id="loginStatus">View Only Mode</span>
-      <!-- Google Sign-In button (centered via CSS) -->
-      <div id="gSignInButton" class="g-signin2" data-onsuccess="onSignIn"></div>
+      <!-- Simple login form for editor password -->
+      <div id="loginForm">
+        <input type="password" id="editorPasswordInput" placeholder="Enter Editor Password" />
+        <button id="loginButton">Login</button>
+      </div>
       <button id="logoutButton" style="display: none;">Logout</button>
     </div>
   </header>
@@ -45,7 +45,7 @@
       <div id="totalChangeDisplay">Total Change: $0</div>
     </section>
     
-    <!-- Section to manage editor accounts (only visible when logged in as an editor) -->
+    <!-- Section to manage editor accounts (still visible for demonstration) -->
     <section id="editorSection" style="display: none;">
       <h2>Manage Editors</h2>
       <form id="addEditorForm">

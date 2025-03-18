@@ -22,15 +22,15 @@ header h1 {
   margin-top: 10px;
 }
 
-/* Center the Google Sign-In button */
-#gSignInButton {
-  margin: 0 auto;
-  display: block;
+/* Style for the login form */
+#loginForm {
+  display: inline-block;
 }
 
 button,
 input[type="text"],
 input[type="number"],
+input[type="password"],
 input[type="email"] {
   padding: 10px;
   border: 1px solid #aaa;
@@ -79,13 +79,13 @@ section {
   border-bottom: none;
 }
 
-/* Make player names clickable and styled */
 .person-name,
 .person-amount {
   flex: 1;
   margin: 0 10px;
 }
 
+/* Make player names clickable and styled */
 .person-name {
   cursor: pointer;
   color: #007BFF;

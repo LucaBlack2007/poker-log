@@ -1,12 +1,18 @@
 // Data storage and state variables
 let persons = []; // Each person: { id, name, amount, transactions }
-let allowedEditors = ["lucablack2007@gmail.com", "forrest.holt@gmail.com"];
+let allowedEditors = ["lucablack2007@gmail.com", "forrest.holt@gmail.com"]; // For demonstration
 let isEditor = false;
-let currentUserEmail = null;
+let currentUserLabel = null; // We'll simply label the editor as "Editor"
 let nextPersonId = 1;
+
+// Define the editor password (change this to your desired password)
+const EDITOR_PASSWORD = "editor";
 
 // Cache DOM elements
 const loginStatusEl = document.getElementById("loginStatus");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const editorPasswordInput = document.getElementById("editorPasswordInput");
 const logoutButton = document.getElementById("logoutButton");
 const addPersonForm = document.getElementById("addPersonForm");
 const personNameInput = document.getElementById("personName");
@@ -25,19 +31,12 @@ const modal = document.getElementById("modal");
 const modalBody = document.getElementById("modalBody");
 const closeModal = document.getElementById("closeModal");
 
-// --- Initialize Google Auth ---
-gapi.load('auth2', function() {
-  gapi.auth2.init().then(() => {
-    console.log("Google Auth initialized");
-  });
-});
-
 // --- UI Update Functions ---
 function updateLoginUI() {
   if (isEditor) {
-    loginStatusEl.textContent = `Editor: ${currentUserEmail}`;
+    loginStatusEl.textContent = `Editor: ${currentUserLabel || "Logged In"}`;
     logoutButton.style.display = "inline-block";
-    document.getElementById("gSignInButton").style.display = "none";
+    loginForm.style.display = "none";
     personNameInput.disabled = false;
     personAmountInput.disabled = false;
     applyChangesButton.disabled = false;
@@ -45,7 +44,7 @@ function updateLoginUI() {
   } else {
     loginStatusEl.textContent = "View Only Mode";
     logoutButton.style.display = "none";
-    document.getElementById("gSignInButton").style.display = "block";
+    loginForm.style.display = "inline-block";
     personNameInput.disabled = true;
     personAmountInput.disabled = true;
     applyChangesButton.disabled = true;
@@ -159,36 +158,33 @@ window.addEventListener("click", (event) => {
   }
 });
 
-// --- Google Sign-In Functions ---
-function onSignIn(googleUser) {
-  const profile = googleUser.getBasicProfile();
-  const email = profile.getEmail();
-  console.log("Signed in with email:", email);
-  
-  if (allowedEditors.includes(email.toLowerCase())) {
+// --- Password-based Login Functions ---
+loginButton.addEventListener("click", () => {
+  const inputPassword = editorPasswordInput.value;
+  if (inputPassword === EDITOR_PASSWORD) {
     isEditor = true;
-    currentUserEmail = email.toLowerCase();
+    currentUserLabel = "Logged In";
+    localStorage.setItem("isEditor", "true");
     updateLoginUI();
   } else {
-    alert("This email is not authorized for editing.");
-    signOut();
+    alert("Incorrect password");
   }
-}
+});
 
-function onFailure(error) {
-  console.error('Google Sign-In error:', error);
+// Check for persisted login on page load
+if (localStorage.getItem("isEditor") === "true") {
+  isEditor = true;
+  currentUserLabel = "Logged In";
 }
+updateLoginUI();
 
-function signOut() {
-  const auth2 = gapi.auth2.getAuthInstance();
-  auth2.signOut().then(() => {
-    isEditor = false;
-    currentUserEmail = null;
-    updateLoginUI();
-  });
-}
-
-logoutButton.addEventListener("click", signOut);
+// Logout functionality
+logoutButton.addEventListener("click", () => {
+  isEditor = false;
+  currentUserLabel = null;
+  localStorage.removeItem("isEditor");
+  updateLoginUI();
+});
 
 // --- Event Handlers ---
 // Add a new person
@@ -239,7 +235,7 @@ applyChangesButton.addEventListener("click", () => {
   transactionNoteInput.value = "";
 });
 
-// Add a new editor email
+// Add a new editor email (for demonstration purposes)
 addEditorForm.addEventListener("submit", (e) => {
   e.preventDefault();
   if (!isEditor) return;
@@ -254,5 +250,3 @@ addEditorForm.addEventListener("submit", (e) => {
     alert("Email is either empty or already an editor.");
   }
 });
-
-updateLoginUI();
