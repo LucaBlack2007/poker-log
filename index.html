@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poker Money Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Replace with your Client ID -->
+  <meta name="google-signin-client_id" content="712369537103-fsd121m5dnd9j1fbkabmanq2msoet2gt.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+</head>
+<body>
+  <header>
+    <h1>Poker Money Tracker</h1>
+    <div id="loginSection">
+      <span id="loginStatus">View Only Mode</span>
+      <!-- Google Sign-In button (centered via CSS) -->
+      <div id="gSignInButton" class="g-signin2" data-onsuccess="onSignIn"></div>
+      <button id="logoutButton" style="display: none;">Logout</button>
+    </div>
+  </header>
+  
+  <main>
+    <!-- Section to add a new person -->
+    <section id="addPersonSection">
+      <h2>Add Person</h2>
+      <form id="addPersonForm">
+        <input type="text" id="personName" placeholder="Name" required />
+        <input type="number" id="personAmount" placeholder="Initial Amount" required />
+        <button type="submit">Add Person</button>
+      </form>
+    </section>
+    
+    <!-- Section to list persons and adjust their balances -->
+    <section id="editSection">
+      <h2>Adjust Balances</h2>
+      <div id="personList">
+        <!-- Person rows will be added here dynamically -->
+      </div>
+      <div id="transactionNoteSection">
+        <label for="transactionNote">Note (optional):</label>
+        <input type="text" id="transactionNote" placeholder="Enter note for these transactions">
+      </div>
+      <button id="applyChangesButton">Apply All Changes</button>
+      <div id="totalChangeDisplay">Total Change: $0</div>
+    </section>
+    
+    <!-- Section to manage editor accounts (only visible when logged in as an editor) -->
+    <section id="editorSection" style="display: none;">
+      <h2>Manage Editors</h2>
+      <form id="addEditorForm">
+        <input type="email" id="editorEmail" placeholder="Editor Email" required />
+        <button type="submit">Add Editor</button>
+      </form>
+      <div id="editorList">
+        <h3>Current Editors:</h3>
+        <ul id="editorsUl">
+          <!-- Editor list will be updated dynamically -->
+        </ul>
+      </div>
+    </section>
+  </main>
+  
+  <!-- Modal for viewing transaction history -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
