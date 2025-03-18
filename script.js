@@ -2,7 +2,6 @@
 let persons = []; // Each person: { id, name, amount, transactions }
 let isEditor = false;
 let nextPersonId = 1;
-const EDITOR_PASSWORD = import.meta.env.VITE_EDITOR_PASSWORD; // Change this to your desired password
 
 // Cache DOM elements
 const loginStatusEl = document.getElementById("loginStatus");
@@ -239,6 +238,8 @@ addPersonForm.addEventListener("submit", (e) => {
   saveData();
   updatePersonList();
 });
+
+const EDITOR_PASSWORD = "supersecret";
 
 // Apply all bulk balance changes
 applyChangesButton.addEventListener("click", () => {
