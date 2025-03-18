@@ -1,12 +1,8 @@
 // Data storage and state variables
 let persons = []; // Each person: { id, name, amount, transactions }
-let allowedEditors = ["lucablack2007@gmail.com", "forrest.holt@gmail.com"]; // For demonstration
 let isEditor = false;
-let currentUserLabel = null; // We'll simply label the editor as "Editor"
 let nextPersonId = 1;
-
-// Define the editor password (change this to your desired password)
-const EDITOR_PASSWORD = "editor";
+const EDITOR_PASSWORD = import.meta.env.VITE_EDITOR_PASSWORD; // Change this to your desired password
 
 // Cache DOM elements
 const loginStatusEl = document.getElementById("loginStatus");
@@ -20,10 +16,6 @@ const personAmountInput = document.getElementById("personAmount");
 const personListEl = document.getElementById("personList");
 const applyChangesButton = document.getElementById("applyChangesButton");
 const totalChangeDisplay = document.getElementById("totalChangeDisplay");
-const editorSection = document.getElementById("editorSection");
-const addEditorForm = document.getElementById("addEditorForm");
-const editorEmailInput = document.getElementById("editorEmail");
-const editorsUl = document.getElementById("editorsUl");
 const transactionNoteInput = document.getElementById("transactionNote");
 
 // Modal elements
@@ -31,16 +23,32 @@ const modal = document.getElementById("modal");
 const modalBody = document.getElementById("modalBody");
 const closeModal = document.getElementById("closeModal");
 
+// --- Persistent Data Functions ---
+function saveData() {
+  localStorage.setItem("pokerPersons", JSON.stringify(persons));
+  localStorage.setItem("isEditor", isEditor ? "true" : "false");
+}
+
+function loadData() {
+  const storedPersons = localStorage.getItem("pokerPersons");
+  if (storedPersons) {
+    persons = JSON.parse(storedPersons);
+    if (persons.length > 0) {
+      nextPersonId = Math.max(...persons.map(p => p.id)) + 1;
+    }
+  }
+  isEditor = localStorage.getItem("isEditor") === "true";
+}
+
 // --- UI Update Functions ---
 function updateLoginUI() {
   if (isEditor) {
-    loginStatusEl.textContent = `Editor: ${currentUserLabel || "Logged In"}`;
+    loginStatusEl.textContent = "Editor: Logged In";
     logoutButton.style.display = "inline-block";
     loginForm.style.display = "none";
     personNameInput.disabled = false;
     personAmountInput.disabled = false;
     applyChangesButton.disabled = false;
-    editorSection.style.display = "block";
   } else {
     loginStatusEl.textContent = "View Only Mode";
     logoutButton.style.display = "none";
@@ -48,10 +56,9 @@ function updateLoginUI() {
     personNameInput.disabled = true;
     personAmountInput.disabled = true;
     applyChangesButton.disabled = true;
-    editorSection.style.display = "none";
   }
   updatePersonList();
-  updateEditorList();
+  updateDynamicTotal();
 }
 
 function updatePersonList() {
@@ -61,20 +68,20 @@ function updatePersonList() {
     const row = document.createElement("div");
     row.className = "person-row";
     
-    // Player name element (clickable to view history)
+    // Player name element (clickable to view transaction history)
     const nameEl = document.createElement("div");
     nameEl.className = "person-name";
     nameEl.textContent = person.name;
     nameEl.addEventListener("click", () => showTransactionHistory(person));
     row.appendChild(nameEl);
     
-    // Current amount element
+    // Current amount display
     const amountEl = document.createElement("div");
     amountEl.className = "person-amount";
     amountEl.textContent = `$${person.amount.toFixed(2)}`;
     row.appendChild(amountEl);
     
-    // Adjustment input element
+    // Adjustment input for bulk changes
     const adjustInput = document.createElement("input");
     adjustInput.type = "number";
     adjustInput.value = "0";
@@ -83,26 +90,38 @@ function updatePersonList() {
     if (!isEditor) {
       adjustInput.disabled = true;
     }
+    // Update dynamic total as you type
+    adjustInput.addEventListener("input", updateDynamicTotal);
     row.appendChild(adjustInput);
+    
+    // Remove button (only visible to editors)
+    if (isEditor) {
+      const removeButton = document.createElement("button");
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => removePlayer(person.id));
+      row.appendChild(removeButton);
+    }
     
     personListEl.appendChild(row);
   });
 }
 
-function updateEditorList() {
-  editorsUl.innerHTML = "";
-  allowedEditors.forEach(email => {
-    const li = document.createElement("li");
-    li.textContent = email;
-    editorsUl.appendChild(li);
+// Dynamically update the total change display as numbers are typed
+function updateDynamicTotal() {
+  let total = 0;
+  const adjustInputs = document.querySelectorAll(".person-adjust");
+  adjustInputs.forEach(input => {
+    const value = parseFloat(input.value) || 0;
+    total += value;
   });
+  totalChangeDisplay.textContent = `Total Change: $${total.toFixed(2)}`;
 }
 
 // --- Modal Functions ---
 function showTransactionHistory(person) {
   modalBody.innerHTML = `<h2>${person.name}'s Transaction History</h2>`;
   
-  if (person.transactions.length === 0) {
+  if (!person.transactions || person.transactions.length === 0) {
     modalBody.innerHTML += "<p>No transactions yet.</p>";
   } else {
     const table = document.createElement("table");
@@ -158,51 +177,70 @@ window.addEventListener("click", (event) => {
   }
 });
 
-// --- Password-based Login Functions ---
+// --- Remove Player Function ---
+function removePlayer(playerId) {
+  if (confirm("Are you sure you want to remove this player?")) {
+    persons = persons.filter(p => p.id !== playerId);
+    saveData();
+    updatePersonList();
+  }
+}
+
+// --- Login/Logout Functions ---
 loginButton.addEventListener("click", () => {
   const inputPassword = editorPasswordInput.value;
   if (inputPassword === EDITOR_PASSWORD) {
     isEditor = true;
-    currentUserLabel = "Logged In";
-    localStorage.setItem("isEditor", "true");
+    saveData();
     updateLoginUI();
   } else {
     alert("Incorrect password");
   }
 });
 
-// Check for persisted login on page load
-if (localStorage.getItem("isEditor") === "true") {
-  isEditor = true;
-  currentUserLabel = "Logged In";
-}
-updateLoginUI();
-
-// Logout functionality
 logoutButton.addEventListener("click", () => {
   isEditor = false;
-  currentUserLabel = null;
-  localStorage.removeItem("isEditor");
+  saveData();
   updateLoginUI();
 });
 
 // --- Event Handlers ---
-// Add a new person
+// Add a new player (with duplicate check and initial transaction logged)
 addPersonForm.addEventListener("submit", (e) => {
   e.preventDefault();
   if (!isEditor) return;
   
   const name = personNameInput.value.trim();
   const amount = parseFloat(personAmountInput.value);
-  if (name && !isNaN(amount)) {
-    persons.push({ id: nextPersonId++, name, amount, transactions: [] });
-    personNameInput.value = "";
-    personAmountInput.value = "";
-    updatePersonList();
+  if (!name || isNaN(amount)) {
+    alert("Please provide a valid name and amount.");
+    return;
   }
+  // Prevent duplicate player names (case-insensitive)
+  if (persons.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    alert("Player already exists.");
+    return;
+  }
+  
+  // Create a new player and log the initial amount as a transaction
+  const newPlayer = {
+    id: nextPersonId++,
+    name: name,
+    amount: amount,
+    transactions: [{
+      change: amount,
+      note: "Initial amount",
+      date: new Date().toLocaleString()
+    }]
+  };
+  persons.push(newPlayer);
+  personNameInput.value = "";
+  personAmountInput.value = "";
+  saveData();
+  updatePersonList();
 });
 
-// Apply all balance changes in bulk
+// Apply all bulk balance changes
 applyChangesButton.addEventListener("click", () => {
   if (!isEditor) return;
   
@@ -225,28 +263,15 @@ applyChangesButton.addEventListener("click", () => {
         date: new Date().toLocaleString()
       });
     }
-    input.value = "0";
+    input.value = "0"; // Reset after applying
   });
   
+  saveData();
   updatePersonList();
-  totalChangeDisplay.textContent = `Total Change: $${totalChange.toFixed(2)}`;
-  
-  // Clear the note input after applying changes
-  transactionNoteInput.value = "";
+  updateDynamicTotal(); // Reset the dynamic total display
+  transactionNoteInput.value = ""; // Clear note input
 });
 
-// Add a new editor email (for demonstration purposes)
-addEditorForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (!isEditor) return;
-  
-  const newEditorEmail = editorEmailInput.value.trim().toLowerCase();
-  if (newEditorEmail && !allowedEditors.includes(newEditorEmail)) {
-    allowedEditors.push(newEditorEmail);
-    editorEmailInput.value = "";
-    updateEditorList();
-    alert(`Added ${newEditorEmail} as an editor.`);
-  } else {
-    alert("Email is either empty or already an editor.");
-  }
-});
+// --- Initialize ---
+loadData();
+updateLoginUI();

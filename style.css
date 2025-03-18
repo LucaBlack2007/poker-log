@@ -30,8 +30,7 @@ header h1 {
 button,
 input[type="text"],
 input[type="number"],
-input[type="password"],
-input[type="email"] {
+input[type="password"] {
   padding: 10px;
   border: 1px solid #aaa;
   border-radius: 5px;
@@ -79,13 +78,13 @@ section {
   border-bottom: none;
 }
 
+/* Make player names clickable and styled */
 .person-name,
 .person-amount {
   flex: 1;
   margin: 0 10px;
 }
 
-/* Make player names clickable and styled */
 .person-name {
   cursor: pointer;
   color: #007BFF;
