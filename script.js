@@ -144,7 +144,8 @@ function updatePersonList() {
     // Display the current amount
     const amountEl = document.createElement("div");
     amountEl.className = "person-amount";
-    amountEl.textContent = `$${person.amount.toFixed(2)}`;
+    const pAmount = person.amount.toFixed(2);
+    amountEl.textContent = pAmount < 0 ? `-$${Math.abs(pAmount)}` : `$${pAmount}`;
     row.appendChild(amountEl);
 
     // Create an adjustment input for bulk changes
